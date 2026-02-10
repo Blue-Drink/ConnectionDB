@@ -1,70 +1,41 @@
-# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
-
-# Compiled output
+# --- Build Output ---
 /dist
 /tmp
 /out-tsc
 /bazel-out
 
-# Node
+# --- Dependency Folders ---
 /node_modules
-npm-debug.log
-yarn-error.log
 
-# IDEs and editors
+# --- IDEs and Editors ---
 .idea/
 .project
 .classpath
 .c9/
-*.launch
 .settings/
-*.sublime-workspace
+*.swp
+*.bak
+*.local
 
-# Visual Studio Code
+# --- Visual Studio Code ---
 .vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/mcp.json
 .history/*
 
-# Miscellaneous
+# --- Angular Specific ---
 /.angular/cache
-.sass-cache/
 /connect.lock
 /coverage
 /libpeerconnection.log
 testem.log
 /typings
-__screenshots__/
 
-# System files
-.DS_Store
-Thumbs.db
-
-##### Added
-.env
-.env.local
-.env.*.local
-
-.angular
-/.next/
-/out/
-
-*.local
-
+# --- Logs ---
 logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-lerna-debug.log*
 
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/.cache/
-
-desktop.ini
-$RECYCLE.BIN/
+# --- System Files ---
+.DS_Store
+Thumbs.db
