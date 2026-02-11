@@ -29,7 +29,7 @@ public class ItemsController : ControllerBase
             result = result.Where(i => RemoveAccents(i.Name.ToLower()).Contains(searchNormalized));
         }
 
-        if (queryParams.Sort!.ToLower() == "desc")
+        if (queryParams.Sort?.ToLower() == "desc")
         {
             result = result.OrderByDescending(i => i.Name);
         }
@@ -49,5 +49,14 @@ public class ItemsController : ControllerBase
             .Normalize(System.Text.NormalizationForm.FormD)
             .Where(ch => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(ch) != System.Globalization.UnicodeCategory.NonSpacingMark)
             .ToArray());
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<Item>> PostItem([FromBody] Item newItem)
+    {
+        _dataContext.Items.Add(newItem);
+        await _dataContext.SaveChangesAsync();
+
+        return CreatedAtAction(nameof(GetItems), new { id = newItem.Id }, newItem);
     }
 }
