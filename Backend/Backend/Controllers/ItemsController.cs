@@ -57,4 +57,33 @@ public class ItemsController : ControllerBase
 
         return CreatedAtAction(nameof(GetItems), new { id = newItem.Id }, newItem);
     }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> PutItem(int id, [FromBody] Item item)
+    {
+        if (id != item.Id)
+        {
+            return BadRequest("ERROR: producto no encontrado");
+        }
+
+        _dataContext.Entry(item).State = EntityState.Modified;
+
+        try
+        {
+            await _dataContext.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!_dataContext.Items.Any(e => e.Id == id))
+            {
+                return NotFound("ERROR: producto no encontrado");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        return NoContent();
+    }
 }
