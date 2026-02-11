@@ -24,19 +24,15 @@ public class ItemsController : ControllerBase
 
         if (!string.IsNullOrEmpty(queryParams.Search))
         {
-            string searchNormalized = RemoveAccents(queryParams.Search.ToLower());
+            string cleanSearch = System.Text.RegularExpressions.Regex.Replace(queryParams.Search, @"[^\w\s]", "");
+            string searchNormalized = RemoveAccents(cleanSearch.ToLower());
 
             result = result.Where(i => RemoveAccents(i.Name.ToLower()).Contains(searchNormalized));
         }
 
-        if (queryParams.Sort?.ToLower() == "desc")
-        {
-            result = result.OrderByDescending(i => i.Name);
-        }
-        else
-        {
-            result = result.OrderBy(i => i.Name);
-        }
+        result = queryParams.Sort?.ToLower() == "desc"
+            ? result.OrderByDescending(i => i.Name)
+            : result.OrderBy(i => i.Name);
 
         return Ok(result.ToList());
     }
@@ -54,6 +50,8 @@ public class ItemsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Item>> PostItem([FromBody] Item newItem)
     {
+        if (newItem == null) return BadRequest("Error: Faltan datos");
+
         _dataContext.Items.Add(newItem);
         await _dataContext.SaveChangesAsync();
 
