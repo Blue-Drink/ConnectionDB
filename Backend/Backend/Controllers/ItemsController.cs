@@ -86,4 +86,21 @@ public class ItemsController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteItem(int id)
+    {
+        var item = await _dataContext.Items.FindAsync(id);
+
+        if (item == null)
+        {
+            return NotFound("ERROR: producto no encontrado");
+        }
+
+        _dataContext.Items.Remove(item);
+
+        await _dataContext.SaveChangesAsync();
+
+        return NoContent();
+    }
 }
