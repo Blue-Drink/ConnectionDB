@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, inject, OnInit } from "@angular/core";
+import { Component, inject, OnInit, signal, computed } from "@angular/core";
 import { ItemService } from "./services/item.service";
 import { Item } from "./models/item.model";
 import { FormsModule } from "@angular/forms";
@@ -13,83 +13,100 @@ import { FormsModule } from "@angular/forms";
 })
 
 export class AppComponent implements OnInit {
-public items: Item[] = [];
-public filteredItems: Item[] = [];
-public searchTerm: string = '';
+	private itemService = inject(ItemService);
 
-ngOnInit(): void {
-	this.itemService.getItems().subscribe({
-		next: (data) => {
-			this.items = data;
-			this.filteredItems = data;
-		},
-		error: (err) => {
-			console.error('Error la conectar con la API:', err);
-		}
-	})
-}
+	// Inyección y Estados
+	public items = signal<Item[]>([]);
+	public searchTerm = signal<string>('');
+	public isLoading = signal<boolean>(false);
+	public errorMessage = signal<string | null>(null);
 
-filterItems() {
-	const term = this.searchTerm.toLowerCase();
-	this.filteredItems = this.items.filter(item =>
-		item.name.toLowerCase().includes(term)
-	)
-}
+	public isEditing = false;
+	public showModal = false;
+	public newItem: Item = { id: 0, name: '', imgUrl: '', stock: 0 };
 
-title = 'Frontend';
+	// Listado dinámico
+	public filteredItems = computed(() => {
+		const term = this.searchTerm().toLowerCase();
+		return this.items().filter(item =>
+			item.name.toLowerCase().includes(term)
+		);
+	});
 
-private itemService = inject(ItemService);  
+	ngOnInit(): void {
+		this.loadItems();
+	}
 
-showModal: boolean = false;
+	loadItems() {
+		this.isLoading.set(true);
+		this.errorMessage.set(null);
 
-newItem: Item = { id: 0, name: '', imgUrl: '', stock: 0 };
-
-saveItem() {
-	if (this.isEditing) {
-		this.itemService.updateItem(this.newItem.id, this.newItem).subscribe({
-			next: () => {
-				const index = this.items.findIndex(i => i.id === this.newItem.id);
-				this.items[index] = {...this.newItem};
-				this.closeModal();
+		this.itemService.getItems().subscribe({
+			next: (data) => {
+				this.items.set(data);
+				this.isLoading.set(false);
 			},
-			error: (err) => console.error(err)
-		});
-	} else {
-		this.itemService.postItems(this.newItem).subscribe({
-			next: (res) => {
-				this.items.push(res);
-				this.filterItems();
-				this.closeModal();
-				console.log('Guardado con éxito');
-			},
-			error: (err) => console.error('Error al guardar:', err)
+			error: (err) => {
+				this.errorMessage.set("Error al conectar con el servidor.");
+				this.isLoading.set(false);
+			}
 		});
 	}
-}
 
-openModal() { this.showModal = true; }
-closeModal() {
-	this.showModal = false;
-	this.isEditing = false;
-	this.newItem = { id: 0, name: '', imgUrl: '', stock: 0 }
-}
-
-isEditing: boolean = false;
-
-openEditModal(item: Item) {
-	this.isEditing = true;
-	this.showModal = true;
-	this.newItem = {...item};
-}
-
-deleteItem(id: number) {
-	if (confirm('¿Está seguro de querer eliminar este artículo?')) {
-		this.itemService.deleteItem(id).subscribe({
-		next: () => {
-			this.items = this.items.filter(i => i.id !== id);
-			this.filterItems();
+	// Eliminar artículo
+	deleteItem(id: number) {
+		if (confirm('¿Está seguro de querer eliminar este artículo?')) {
+			this.itemService.deleteItem(id).subscribe({
+				next: () => {
+					this.items.update(prev => prev.filter(i => i.id !== id));
+				}
+			});
 		}
-		})
 	}
+
+	// Añadir un artículo
+	saveItem() {
+		if (!this.newItem.name) return;
+		this.isLoading.set(true);
+
+		if (this.isEditing) {
+			this.itemService.updateItem(this.newItem.id, this.newItem).subscribe({
+				next: () => {
+					this.items.update(prev =>
+						prev.map(i => i.id === this.newItem.id ? {...this.newItem} : i)
+					);
+					this.closeModal();
+				},
+				error: (err) => {
+					this.errorMessage.set(err.message);
+				}
+			});
+		} else {
+			this.itemService.postItems(this.newItem).subscribe({
+				next: (res) => {
+					this.items.update(prev => [...prev, res]);
+					this.closeModal();;
+				},
+				error: (err) => {
+					this.errorMessage.set(err.message);
+				}
+			});
+		}
+		this.isLoading.set(false)
+	}
+
+	// Utilidades
+	openModal() { this.showModal = true; }
+
+	closeModal() {
+		this.showModal = false;
+		this.isEditing = false;
+		this.newItem = { id: 0, name: '', imgUrl: '', stock: 0 }
+	}
+
+	openEditModal(item: Item) {
+		this.isEditing = true;
+		this.showModal = true;
+		this.newItem = {...item};
 	}
 }
