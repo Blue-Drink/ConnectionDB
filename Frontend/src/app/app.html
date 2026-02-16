@@ -1,4 +1,10 @@
 <div class="container">
+	@if (errorMessage()) {
+		<div class="error-banner">
+			{{ errorMessage() }}
+			<button (click)="loadItems()">Reintentar</button>
+		</div>
+	}
 	<header>
 		<h1>Inventario de Artículos</h1>
 
@@ -7,27 +13,36 @@
 		</div>
 	</header>
 
-	<div class="grid" *ngIf="filteredItems.length > 0; else noData">
-		@for (item of filteredItems(); track item.id) {
-			<div class="card">
-				<div class="card-image">
-					<img [src]="item.imgUrl || 'https:via.placeholder.com/150'" [alt]="item.name">
+	@if (isLoading()) {
+		<div class="loader-wrapper">
+			<div class="spinner"></div>
+			<p>Cargando artículos...</p>
+		</div>
+	} @else {
+		<div class="grid">
+			@for (item of filteredItems(); track item.id) {
+				<div class="card">
+					<div class="card-image">
+						<img [src]="item.imgUrl || 'https:via.placeholder.com/150'" [alt]="item.name">
+					</div>
+					
+					<div class="card-content">
+						<h3>{{ item.name }}</h3>
+						<p class="stock" [ngClass]="{'low-stock': item.stock < 5}">
+							Stock: <strong>{{ item.stock }}</strong> unidades
+						</p>
+					</div>
+					
+					<div class="card-actions">
+						<button class="btn-edit" (click)="openEditModal(item)">Editar</button>
+						<button class="btn-delete" (click)="deleteItem(item.id)">Eliminar</button>
+					</div>
 				</div>
-
-				<div class="card-content">
-					<h3>{{ item.name }}</h3>
-					<p class="stock" [ngClass]="{'low-stock': item.stock < 5}">
-						Stock: <strong>{{ item.stock }}</strong> unidades
-					</p>
-				</div>
-
-				<div class="card-actions">
-					<button class="btn-edit" (click)="openEditModal(item)">Editar</button>
-					<button class="btn-delete" (click)="deleteItem(item.id)">Eliminar</button>
-				</div>
-			</div>
-		}
-		
+			} @empty {
+				<p>No se encontraron productos</p>
+			}
+		</div>
+	}
 </div>
 
 <button class="fab" (click)="openModal()">+</button>
@@ -57,9 +72,3 @@
 		</div>
 	</div>
 </div>
-
-<ng-template #noData>
-	<div class="loader">
-		<p>Cargando datos</p>
-	</div>
-</ng-template>
