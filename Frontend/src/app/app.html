@@ -1,15 +1,32 @@
+<div class="container">
+	<header>
+		<h1>Inventario de Artículos</h1>
+		<p>Conectado a: <code>http://localhost:7221/api/items</code></p>
+	</header>
 
-<h1>Inventario de Artículos</h1>
+	<div class="grid" *ngIf="items.length > 0; else noData">
+		<div class="card" *ngFor="let item of items">
+			<div class="card-image">
+				<img [src]="item.imgUrl || 'https:via.placeholder.com/150'" [alt]="item.name">
+			</div>
 
-<div>
-  <ul>
-    <li *ngFor="let item of items">
-      <img [src]="item.imgUrl" alt="{{ item.name }}">
-      <b>{{ item.name }}</b> - Stock: {{ item.stock }}
-    </li>
-  </ul>
-</div>
+			<div class="card-content">
+				<h3>{{ item.name }}</h3>
+				<p class="stock" [ngClass]="{'low-stock': item.stock < 5}">
+					Stock: <strong>{{ item.stock }}</strong> unidades
+				</p>
+			</div>
+
+			<div class="card-actions">
+				<button class="btn-edit">Editar</button>
+				<button class="btn-delete">Eliminar</button>
+			</div>
+		</div>
+	</div>
+</div>	
 
 <ng-template #noData>
-  <p>Cargando datos</p>
+	<div class="loader">
+		<p>Cargando datos</p>
+	</div>
 </ng-template>
