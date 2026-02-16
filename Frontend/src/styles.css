@@ -1,1 +1,18 @@
-/* You can add global styles to this file, and also import other style files */
+:root {
+	--blue: #1976d2;
+	--red: #d32f2f;
+	--green: #2e7d32;
+
+	--body: #f5f5f5;
+	--card: #ffffff;
+	--text-main: #333333;
+	--text-muted: #666666;
+	--border: #e0e0e0;
+
+	--shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+	--shadow-md: 0 4px 15px rgba(0,0,0,0.1);
+	--radius-lg: 12px;
+	--radius-md: 8px;
+	--radius-sm: 4px;
+	--transition: 0.2s ease-in-out;
+}
