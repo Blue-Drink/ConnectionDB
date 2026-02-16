@@ -19,4 +19,8 @@ export class ItemService {
      postItems(item: Item): Observable<Item> {
           return this.http.post<Item>(this.apiUrl, item);
      }
+
+     updateItem(id: number, item: Item): Observable<any> {
+          return this.http.put(`${this.apiUrl}/${id}`, item);
+     }
 }

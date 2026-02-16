@@ -18,7 +18,7 @@
 			</div>
 
 			<div class="card-actions">
-				<button class="btn-edit">Editar</button>
+				<button class="btn-edit" (click)="openEditModal(item)">Editar</button>
 				<button class="btn-delete">Eliminar</button>
 			</div>
 		</div>
@@ -29,7 +29,7 @@
 
 <div class="modal-overlay" *ngIf="showModal">
 	<div class="modal-content">
-		<h2>Nuevo Artículo</h2>
+		<h2>{{ isEditing ? 'Editar Artículo' : 'Nuevo Artículo' }}</h2>
 
 		<div class="form-group">
 			<label for="name">Nombre</label>
