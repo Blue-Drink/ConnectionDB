@@ -2,11 +2,12 @@ import { CommonModule } from "@angular/common";
 import { Component, inject, OnInit } from "@angular/core";
 import { ItemService } from "./services/item.service";
 import { Item } from "./models/item.model";
+import { FormsModule } from "@angular/forms";
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -28,5 +29,36 @@ export class AppComponent implements OnInit {
         console.error('Error la conectar con la API:', err);
       }
     })
+  }
+
+  showModal: boolean = false;
+
+  newItem: Item = {
+    id: 0,
+    name: '',
+    imgUrl: '',
+    stock: 0
+  };
+
+  saveItem() {
+    this.itemService.postItems(this.newItem).subscribe({
+      next: (res) => {
+        this.items.push(res);
+        this.closeModal();
+        console.log('Guardado con éxito');
+      },
+      error: (err) => console.error('Error al guardar:', err)
+    });
+  }
+
+  openModal() { this.showModal = true; }
+  closeModal() {
+    this.showModal = false;
+    this.newItem = {
+      id: 0,
+      name: '',
+      imgUrl: '',
+      stock: 0
+    }
   }
 }
