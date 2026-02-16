@@ -81,4 +81,14 @@ export class AppComponent implements OnInit {
     this.showModal = true;
     this.newItem = {...item};
   }
+
+  deleteItem(id: number) {
+    if (confirm('¿Está seguro de querer eliminar este artículo?')) {
+      this.itemService.deleteItem(id).subscribe({
+        next: () => {
+          this.items = this.items.filter(i => i.id !== id);
+        }
+      })
+    }
+  }
 }
