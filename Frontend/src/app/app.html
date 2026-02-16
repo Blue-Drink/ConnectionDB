@@ -51,24 +51,35 @@
 	<div class="modal-content">
 		<h2>{{ isEditing ? 'Editar Artículo' : 'Nuevo Artículo' }}</h2>
 
-		<div class="form-group">
-			<label for="name">Nombre</label>
-			<input type="text" name="name" [(ngModel)]="newItem.name" placeholder="Ej. Monitor 4K" />
-		</div>
+		<form #itemForm="ngForm">
+			<div class="form-group">
+				<label for="name">Nombre:</label>
+				<input required #nameModel="ngModel" type="text" name="name" [(ngModel)]="newItem.name" placeholder="Ej. Monitor 4K" [class.is-invalid]="nameModel.invalid && nameModel.touched" />
+				@if (nameModel.invalid && nameModel.touched) {
+					<small class="error-text">El nombre es obligatorio.</small>
+				}
+			</div>
 
-		<div class="form-group">
-			<label for="img">URL imagen:</label>
-			<input type="text" name="img" [(ngModel)]="newItem.imgUrl" placeholder="https://..." />
-		</div>
+			<div class="form-group">
+				<label for="img">URL imagen:</label>
+				<input required #imgModel="ngModel" type="text" name="img" [(ngModel)]="newItem.imgUrl" placeholder="https://..." [class.is-invalid]="imgModel.invalid && imgModel.touched" />
+				@if (imgModel.invalid && imgModel.touched) {
+					<small class="error-text">La URL de imagen es obligatoria.</small>
+				}
+			</div>
 
-		<div class="form-group">
-			<label for="stock">Stock:</label>
-			<input type="number" name="stock" [(ngModel)]="newItem.stock" />
-		</div>
+			<div class="form-group">
+				<label for="stock">Stock:</label>
+				<input required min="0" #stockModel="ngModel" type="number" name="stock" [(ngModel)]="newItem.stock" [class.is-invalid]="stockModel.invalid && stockModel.touched" />
+				@if (imgModel.invalid && imgModel.touched) {
+					<small class="error-text">El stock es obligatorio</small>
+				}
+			</div>
 
-		<div class="modal-actions">
-			<button (click)="closeModal()" class="btn-cancel">Cancelar</button>
-			<button (click)="saveItem()" class="btn-save">Guardar</button>
-		</div>
+			<div class="modal-actions">
+				<button (click)="closeModal()" class="btn-cancel">Cancelar</button>
+				<button type="submit" (click)="saveItem()" class="btn-save" [disabled]="itemForm.invalid">Guardar</button>
+			</div>
+		</form>
 	</div>
 </div>
