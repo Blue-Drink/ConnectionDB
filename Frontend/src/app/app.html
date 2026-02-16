@@ -71,7 +71,7 @@
 			<div class="form-group">
 				<label for="stock">Stock:</label>
 				<input required min="0" #stockModel="ngModel" type="number" name="stock" [(ngModel)]="newItem.stock" [class.is-invalid]="stockModel.invalid && stockModel.touched" />
-				@if (imgModel.invalid && imgModel.touched) {
+				@if (stockModel.invalid && stockModel.touched) {
 					<small class="error-text">El stock es obligatorio</small>
 				}
 			</div>
