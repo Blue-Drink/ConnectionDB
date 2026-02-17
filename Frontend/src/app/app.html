@@ -71,7 +71,7 @@
 				<label for="img">Imagen del Artículo:</label>
 				<input required (change)="onFileSelected($event)" accept="image/*" type="file" name="img" placeholder="https://..." />
 				@if (newItem.imgRoute){
-					<img [src]="newItem.imgRoute.startsWith('blob:') ? newItem.imgRoute : 'https://localhost:7221/images/test.png'" alt="preview" class="preview" />
+					<img [src]="getPreviewUrl(newItem.imgRoute)" alt="preview" class="preview" />
 				}
 			</div>
 

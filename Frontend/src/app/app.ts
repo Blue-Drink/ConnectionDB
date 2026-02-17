@@ -139,4 +139,12 @@ export class AppComponent implements OnInit {
 		this.sortOrder.update(current => current === 'asc' ? 'desc' : 'asc');
 		this.loadItems();
 	}
+
+	getPreviewUrl(route: string): string {
+		if (route.startsWith('blob:')) {
+			return route;
+		}
+
+		return `https://localhost:7221${route}`;
+	}
 }
