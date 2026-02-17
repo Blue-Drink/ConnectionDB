@@ -15,13 +15,17 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.UseSwagger();
     app.UseSwaggerUI();
+
+    app.UseCors(policy =>
+        policy.SetIsOriginAllowed(origin =>
+            new Uri(origin).Host == "localhost")
+            .AllowAnyMethod()
+            .AllowAnyHeader());
 }
 
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
-
-app.UseCors(policy => policy.WithOrigins("https://localhost:7221").AllowAnyMethod().AllowAnyHeader());
 
 app.UseAuthorization();
 app.MapControllers();
