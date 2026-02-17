@@ -2,8 +2,6 @@ using Backend.Models.Database;
 
 var builder = WebApplication.CreateBuilder(args);
 
-Directory.SetCurrentDirectory(AppContext.BaseDirectory);
-
 // Add services to the container.
 builder.Services.AddControllers();
 
@@ -25,9 +23,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors(options => options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
-
 app.UseHttpsRedirection();
+
+app.UseStaticFiles();
+
+app.UseCors(policy => policy.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost").AllowAnyMethod().AllowAnyHeader());
+
+app.UseRouting();
 
 app.UseAuthorization();
 
@@ -42,7 +44,8 @@ void CreateDatabase(IServiceProvider services)
     using IServiceScope scope = services.CreateScope();
     using DataContext dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
 
-    if (dataContext.Database.EnsureCreated())
+    dataContext.Database.EnsureCreated();
+    if (dataContext.Items.Count() < 30)
     {
         Seeder seeder = new();
         seeder.Seed(dataContext);

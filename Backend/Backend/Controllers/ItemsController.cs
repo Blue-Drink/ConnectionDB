@@ -10,10 +10,12 @@ namespace Backend.Controllers;
 public class ItemsController : ControllerBase
 {
     private readonly DataContext _dataContext;
+    private readonly IWebHostEnvironment _environment;
 
-    public ItemsController(DataContext dataContext)
+    public ItemsController(DataContext dataContext, IWebHostEnvironment environment)
     {
         _dataContext = dataContext;
+        _environment = environment;
     }
 
     [HttpGet]
@@ -48,9 +50,32 @@ public class ItemsController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<Item>> PostItem([FromBody] Item newItem)
+    public async Task<ActionResult<Item>> PostItem([FromForm] ItemRequest request)
     {
-        if (newItem == null) return BadRequest("Error: Faltan datos");
+        string imgRoute = "/images/test.png";
+
+        if (request.ImageFile != null && request.ImageFile.Length > 0)
+        {
+            var uploadsFolder = Path.Combine(_environment.WebRootPath, "images");
+
+            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(request.ImageFile.FileName);
+            var uploadPath = Path.Combine(uploadsFolder, fileName);
+
+            using (var stream = new FileStream(uploadPath, FileMode.Create))
+            {
+                await request.ImageFile.CopyToAsync(stream);
+            }
+            imgRoute = $"/images/{fileName}";
+        }
+
+        var newItem = new Item
+        {
+            Name = request.Name,
+            Stock = request.Stock,
+            ImgRoute = imgRoute
+        };
 
         _dataContext.Items.Add(newItem);
         await _dataContext.SaveChangesAsync();
@@ -59,31 +84,27 @@ public class ItemsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutItem(int id, [FromBody] Item item)
+    public async Task<IActionResult> PutItem(int id, [FromForm] ItemRequest request)
     {
-        if (id != item.Id)
-        {
-            return BadRequest("ERROR: producto no encontrado");
-        }
+        var existingItem = await _dataContext.Items.FindAsync(id);
+        if (existingItem == null) return NotFound("ERROR: Artículo no encontrado.");
 
-        _dataContext.Entry(item).State = EntityState.Modified;
+        existingItem.Name = request.Name;
+        existingItem.Stock = request.Stock;
+        
+        if (request.ImageFile != null && request.ImageFile.Length > 0)
+        {
+            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(request.ImageFile.FileName);
+            var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", fileName);
 
-        try
-        {
-            await _dataContext.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!_dataContext.Items.Any(e => e.Id == id))
+            using (var stream = new FileStream(uploadPath, FileMode.Create))
             {
-                return NotFound("ERROR: producto no encontrado");
+                await request.ImageFile.CopyToAsync(stream);
             }
-            else
-            {
-                throw;
-            }
+            existingItem.ImgRoute = $"/images/{fileName}";
         }
 
+        await _dataContext.SaveChangesAsync();
         return NoContent();
     }
 

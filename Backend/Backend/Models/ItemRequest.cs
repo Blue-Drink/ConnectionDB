@@ -1,12 +1,8 @@
 ﻿namespace Backend.Models;
 
-public class Item
+public class ItemRequest
 {
-    public int Id { get; set; }
-
     public required string Name { get; set; }
-
-    public required string ImgRoute { get; set; }
-
     public required int Stock { get; set; }
+    public IFormFile? ImageFile { get; set; }
 }

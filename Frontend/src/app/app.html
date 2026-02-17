@@ -10,6 +10,9 @@
 
 		<div class="search-container">
 			<input type="text" [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" placeholder="🔍 Buscar artículo">
+			<button class="btn-sort" (click)="toggleSort()" title="Cambiar orden">
+				{{ sortOrder() === 'asc' ? 'A-Z ↓' : 'Z-A ↑' }}
+			</button>
 		</div>
 	</header>
 
@@ -23,11 +26,15 @@
 			@for (item of filteredItems(); track item.id) {
 				<div class="card">
 					<div class="card-image">
-						<img [src]="item.imgUrl || 'https:via.placeholder.com/150'" [alt]="item.name">
+						<img [src]="'https://localhost:7221' + item.imgRoute" [alt]="item.name">
 					</div>
 					
 					<div class="card-content">
-						<h3>{{ item.name }}</h3>
+						<span class="card-title">
+							<p>#{{item.id}}</p>
+							<h3>{{ item.name }}</h3>							
+						</span>
+						
 						<p class="stock" [ngClass]="{'low-stock': item.stock < 5}">
 							Stock: <strong>{{ item.stock }}</strong> unidades
 						</p>
@@ -61,10 +68,10 @@
 			</div>
 
 			<div class="form-group">
-				<label for="img">URL imagen:</label>
-				<input required #imgModel="ngModel" type="text" name="img" [(ngModel)]="newItem.imgUrl" placeholder="https://..." [class.is-invalid]="imgModel.invalid && imgModel.touched" />
-				@if (imgModel.invalid && imgModel.touched) {
-					<small class="error-text">La URL de imagen es obligatoria.</small>
+				<label for="img">Imagen del Artículo:</label>
+				<input required (change)="onFileSelected($event)" accept="image/*" type="file" name="img" placeholder="https://..." />
+				@if (newItem.imgRoute){
+					<img [src]="newItem.imgRoute.startsWith('blob:') ? newItem.imgRoute : 'https://localhost:7221/images/test.png'" alt="preview" class="preview" />
 				}
 			</div>
 
@@ -78,7 +85,7 @@
 
 			<div class="modal-actions">
 				<button (click)="closeModal()" class="btn-cancel">Cancelar</button>
-				<button type="submit" (click)="saveItem()" class="btn-save" [disabled]="itemForm.invalid">Guardar</button>
+				<button type="submit" (click)="saveItem()" class="btn-save" [disabled]="itemForm.invalid" || (!selectedFile && !isEditing)>Guardar</button>
 			</div>
 		</form>
 	</div>

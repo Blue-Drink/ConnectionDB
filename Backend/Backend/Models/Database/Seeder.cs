@@ -4,7 +4,7 @@ public class Seeder
 {
     public void Seed(DataContext context)
     {
-        if (!context.Items.Any())
+        if (context.Items.Count() < 30)
         {
             var baseNames = new List<string>
             {
@@ -19,7 +19,7 @@ public class Seeder
                 context.Items.Add(new Item
                 {
                     Name = name,
-                    ImgUrl = $"https://picsum.photos/200?random={name.GetHashCode()}",
+                    ImgRoute = "/images/test.png",
                     Stock = new Random().Next(1, 50)
                 });
             }
@@ -30,7 +30,7 @@ public class Seeder
                 context.Items.Add(new Item
                 {
                     Name = $"Extra Gadget {i}",
-                    ImgUrl = $"https://picsum.photos/200?random={i}",
+                    ImgRoute = "/images/test.png",
                     Stock = new Random().Next(1, 200)
                 });
             }

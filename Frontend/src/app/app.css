@@ -63,6 +63,16 @@ header {
 	flex-grow: 1;
 }
 
+.card-title {
+	display: flex;
+	flex-direction: row;
+	gap: 10px;
+}
+
+.card-title p {
+	font-size: large;
+}
+
 .stock {
 	color: var(--text-muted);
 	font-size: 0.9rem;
@@ -158,6 +168,12 @@ header {
 	border: 1px solid var(--border);
 	border-radius: var(--radius-sm);
 	box-sizing: border-box;
+}
+
+.preview {
+	max-width: 150px;
+	margin-top: 10px;
+	border-radius: var(--radius-md);
 }
 
 /*VALIDATION AND FEEDBACK*/

@@ -1,4 +1,4 @@
-import { HttpClient } from "@angular/common/http";
+import { HttpClient, HttpParams } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { Observable } from "rxjs";
 import { Item } from "../models/item.model";
@@ -13,8 +13,14 @@ export class ItemService {
 
 	constructor(private http: HttpClient){}
 
-	getItems(): Observable<Item[]> {
-		return this.http.get<Item[]>(this.apiUrl).pipe(
+	getItems(params?: {sort?: string}): Observable<Item[]> {
+		let httpParams = new HttpParams();
+
+		if (params?.sort) {
+			httpParams = httpParams.set('sort', params.sort);
+		}
+
+		return this.http.get<Item[]>(this.apiUrl, {params: httpParams}).pipe(
 			catchError(error => {
 				console.error('Error en la petición:', error);
 				return throwError(() => new Error('No se pudo obtener la lista de artículos.'))
@@ -22,8 +28,26 @@ export class ItemService {
 		);
 	}
 
-	postItems(item: Item): Observable<Item> {
-		return this.http.post<Item>(this.apiUrl, item).pipe(
+	private createFormData(item: Item, file?: File): FormData{
+		const formData = new FormData();
+		formData.append('name', item.name);
+		formData.append('stock', item.stock.toString());
+		if (file) {
+			formData.append('imageFile', file);
+		}
+		return formData;
+	}
+
+	postItems(item: Item, file?: File): Observable<Item> {
+		const formData = new FormData();
+		formData.append('name', item.name);
+		formData.append('stock', item.stock.toString());
+
+		if (file) {
+			formData.append('imageFile', file);
+		}
+
+		return this.http.post<Item>(this.apiUrl, formData).pipe(
 			catchError(error => {
 				console.error('Error en la petición', error);
 				return throwError(() => new Error('No se pudo añadir el artículo.'))
@@ -31,8 +55,9 @@ export class ItemService {
 		);
 	}
 
-	updateItem(id: number, item: Item): Observable<any> {
-		return this.http.put(`${this.apiUrl}/${id}`, item).pipe(
+	updateItem(id: number, item: Item, file?: File): Observable<any> {
+		const data = this.createFormData(item, file);
+		return this.http.put(`${this.apiUrl}/${id}`, data).pipe(
 			catchError(error => {
 				console.error('Error en la petición', error);
 				return throwError(() => new Error('No se pudo modificar el artículo.'))

@@ -20,4 +20,10 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="wwwroot\images\test.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>
