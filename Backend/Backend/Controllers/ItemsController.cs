@@ -27,12 +27,15 @@ public class ItemsController : ControllerBase
 
         if (!string.IsNullOrEmpty(queryParams.Search))
         {
-            query = query.Where(i => i.Name.ToLower().Contains(queryParams.Search));
+            // Ensure the search term itself is lowered to match the lowered Name
+            var searchTerm = queryParams.Search.ToLower();
+            query = query.Where(i => i.Name.ToLower().Contains(searchTerm));
         }
 
+        // Apply ToLower() here to ignore case during alphabetical sorting
         query = queryParams.Sort?.ToLower() == "desc"
-            ? query.OrderByDescending(i => i.Name)
-            : query.OrderBy(i => i.Name);
+            ? query.OrderByDescending(i => i.Name.ToLower())
+            : query.OrderBy(i => i.Name.ToLower());
 
         return Ok(await query.ToListAsync());
     }
