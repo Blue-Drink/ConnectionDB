@@ -1,5 +1,5 @@
-﻿using Backend.Models;
-using Backend.Models.Database;
+﻿using Backend.Models.Database;
+using Backend.Models.Database.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,70 +11,40 @@ public class ItemsController : ControllerBase
 {
     private readonly DataContext _dataContext;
     private readonly IWebHostEnvironment _environment;
+    private readonly string _imagesPath;
 
     public ItemsController(DataContext dataContext, IWebHostEnvironment environment)
     {
         _dataContext = dataContext;
         _environment = environment;
+        _imagesPath = Path.Combine(_environment.WebRootPath, "images");
     }
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Item>>> GetItems([FromQuery] ItemQuery queryParams)
     {
-        var items = await _dataContext.Items.ToListAsync();
-        var result = items.AsEnumerable();
+        var query = _dataContext.Items.AsNoTracking().AsQueryable();
 
         if (!string.IsNullOrEmpty(queryParams.Search))
         {
-            string cleanSearch = System.Text.RegularExpressions.Regex.Replace(queryParams.Search, @"[^\w\s]", "");
-            string searchNormalized = RemoveAccents(cleanSearch.ToLower());
-
-            result = result.Where(i => RemoveAccents(i.Name.ToLower()).Contains(searchNormalized));
+            query = query.Where(i => i.Name.ToLower().Contains(queryParams.Search));
         }
 
-        result = queryParams.Sort?.ToLower() == "desc"
-            ? result.OrderByDescending(i => i.Name)
-            : result.OrderBy(i => i.Name);
+        query = queryParams.Sort?.ToLower() == "desc"
+            ? query.OrderByDescending(i => i.Name)
+            : query.OrderBy(i => i.Name);
 
-        return Ok(result.ToList());
-    }
-
-    private string RemoveAccents(string text)
-    {
-        if (string.IsNullOrWhiteSpace(text)) return text;
-
-        return new string(text
-            .Normalize(System.Text.NormalizationForm.FormD)
-            .Where(ch => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(ch) != System.Globalization.UnicodeCategory.NonSpacingMark)
-            .ToArray());
+        return Ok(await query.ToListAsync());
     }
 
     [HttpPost]
     public async Task<ActionResult<Item>> PostItem([FromForm] ItemRequest request)
     {
-        string imgRoute = "/images/test.png";
-
-        if (request.ImageFile != null && request.ImageFile.Length > 0)
-        {
-            var uploadsFolder = Path.Combine(_environment.WebRootPath, "images");
-
-            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-
-            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(request.ImageFile.FileName);
-            var uploadPath = Path.Combine(uploadsFolder, fileName);
-
-            using (var stream = new FileStream(uploadPath, FileMode.Create))
-            {
-                await request.ImageFile.CopyToAsync(stream);
-            }
-            imgRoute = $"/images/{fileName}";
-        }
-
         var newItem = new Item
         {
             Name = request.Name,
-            Stock = request.Stock,
-            ImgRoute = imgRoute
+            ImgRoute = await SaveImageAsync(request.ImageFile) ?? "/images/test.png",
+            Stock = request.Stock
         };
 
         _dataContext.Items.Add(newItem);
@@ -92,16 +62,10 @@ public class ItemsController : ControllerBase
         existingItem.Name = request.Name;
         existingItem.Stock = request.Stock;
         
-        if (request.ImageFile != null && request.ImageFile.Length > 0)
+        if (request.ImageFile != null)
         {
-            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(request.ImageFile.FileName);
-            var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images", fileName);
-
-            using (var stream = new FileStream(uploadPath, FileMode.Create))
-            {
-                await request.ImageFile.CopyToAsync(stream);
-            }
-            existingItem.ImgRoute = $"/images/{fileName}";
+            DeleteImage(existingItem.ImgRoute);
+            existingItem.ImgRoute = await SaveImageAsync(request.ImageFile) ?? "/images/test.png";
         }
 
         await _dataContext.SaveChangesAsync();
@@ -112,16 +76,67 @@ public class ItemsController : ControllerBase
     public async Task<IActionResult> DeleteItem(int id)
     {
         var item = await _dataContext.Items.FindAsync(id);
+        if (item == null) return NotFound("ERROR: producto no encontrado");
 
-        if (item == null)
-        {
-            return NotFound("ERROR: producto no encontrado");
-        }
+        var imagePathToDelete = item.ImgRoute;
 
         _dataContext.Items.Remove(item);
 
-        await _dataContext.SaveChangesAsync();
+        try
+        {
+            await _dataContext.SaveChangesAsync();
 
-        return NoContent();
+            DeleteImage(imagePathToDelete);
+
+            return NoContent();
+        }
+        catch
+        {
+            return StatusCode(500, "Error updating database. Image was preserved.");
+        }
+    }
+
+    private async Task<string?> SaveImageAsync(IFormFile? file)
+    {
+        if (file == null || file.Length == 0) return null;
+
+        var supportedTypes = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+        var extension = Path.GetExtension(file.FileName).ToLower();
+        if (!supportedTypes.Contains(extension)) return null;
+
+        if (!Directory.Exists(_imagesPath)) Directory.CreateDirectory(_imagesPath);
+
+        var fileName = $"{Guid.NewGuid()}{extension}";
+        var fullPath = Path.Combine(_imagesPath, fileName);
+
+        using (var stream = new FileStream(
+            fullPath,
+            FileMode.Create,
+            FileAccess.Write,
+            FileShare.Read,
+            4096,
+            useAsync: true))
+        {
+            await file.CopyToAsync(stream);
+        }
+        
+        return $"/images/{fileName}";
+    }
+
+    private void DeleteImage(string imgRoute)
+    {
+        if (string.IsNullOrEmpty(imgRoute) || imgRoute.Contains("test.png")) return;
+
+        try
+        {
+            var fileName = Path.GetFileName(imgRoute);
+            var fullPath = Path.Combine(_imagesPath, fileName);
+
+            if (System.IO.File.Exists(fullPath)) System.IO.File.Delete(fullPath);
+        }
+        catch (IOException ex)
+        {
+            Console.WriteLine($"Orphaned file alert: {ex.Message}");
+        }
     }
 }
